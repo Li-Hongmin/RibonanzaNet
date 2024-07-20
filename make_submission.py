@@ -34,11 +34,11 @@ sub=pl.read_csv(f"{config.input_dir}/sample_submission.csv")
 sub=sub.with_columns(pl.Series(name="reactivity_DMS_MaP", values=standard_preds[:,0]))
 sub=sub.with_columns(pl.Series(name="reactivity_2A3_MaP", values=standard_preds[:,1]))
 
-sub=sub.with_columns(
-    pl.col("reactivity_DMS_MaP").round(2)
+sub = sub.with_columns(
+    pl.col("reactivity_DMS_MaP").round(2).map_elements(lambda x: max(x, 0), return_dtype=float)
 )
-sub=sub.with_columns(
-    pl.col("reactivity_2A3_MaP").round(2)
+sub = sub.with_columns(
+    pl.col("reactivity_2A3_MaP").round(2).map_elements(lambda x: max(x, 0), return_dtype=float)
 )
-
 sub.write_parquet("test.parquet")
+sub.write_csv("test.csv")
