@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from Dataset import TestRNAdataset, Custom_Collate_Obj_test
 from Network import RibonanzaNet
 from Functions import load_config_from_yaml, get_distance_mask
+import pickle
 
 # Start the timer
 start_time = time.time()
@@ -24,7 +25,7 @@ args = parser.parse_args()
 config = load_config_from_yaml(args.config_path)
 
 # Initialize the accelerator
-accelerator = Accelerator(mixed_precision='fp16')
+accelerator = Accelerator(mixed_precision='fp16', cpu=False, dynamo_backend='no')
 
 # Set CUDA devices and create necessary directories
 os.environ["CUDA_VISIBLE_DEVICES"] = config.gpu_id
@@ -34,7 +35,7 @@ os.makedirs('subs', exist_ok=True)
 
 # Load and process data
 data = pl.read_csv(f"{config.input_dir}/test_sequences.csv")
-lengths = data['sequence'].apply(len).to_list()
+lengths = data['sequence'].map_elements(len).to_list()  # Updated line to avoid deprecation warning
 data = data.with_columns(pl.Series('sequence_length', lengths))
 data = data.sort('sequence_length', descending=True)
 
@@ -55,7 +56,7 @@ models = []
 for i in range(1):  # Adjust range if multiple models are used
     model = RibonanzaNet(config).cuda()
     model.eval()
-    model.load_state_dict(torch.load(f"models/model{i}.pt", map_location='gpu'))
+    model.load_state_dict(torch.load(f"models/model{i}.pt", map_location=torch.device('cuda')))  # Ensure GPU usage
     models.append(model)
 
 # Prepare models and dataloader with accelerator
