@@ -26,3 +26,23 @@ Ribonanza_bpp_files       stanford-ribonanza-rna-folding.zip  train_data_QUICK_S
 335617 train_data_QUICK_START.csv
 (base) [d58004@wisteria08 stanford-ribonanza-rna-folding]$ wc -l train_data.csv 
 1643681 train_data.csv
+
+#!/bin/sh
+  
+#------ pjsub option --------# 
+#PJM -L rscgrp=share
+#PJM -L gpu=1
+#PJM -L elapse=4:00:00 
+#PJM -g gs58
+#PJM -j
+
+
+#------- Program execution -------#
+export MPLCONFIGDIR="/work/gs58/d58004/tmp/matplotlib"
+export WANDB_CONFIG_DIR="/work/gs58/d58004/tmp/wandb"
+export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
+nvidia-smi
+cd /work/gs58/d58004/ideas/RibonanzaNet
+accelerate launch --mixed_precision=fp16 --dynamo_backend=no inference.py --config_path configs/pairwise.yaml
+
+~                                                                   

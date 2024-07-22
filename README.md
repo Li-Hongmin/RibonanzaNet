@@ -53,6 +53,11 @@ accelerate launch run.py --config_path configs/pairwise.yaml
 ### Process raw prediction into submission file for Ribonanza
 ```python make_submission.py --config_path configs/pairwise.yaml```
 
+kaggle competitions submit -c stanford-ribonanza-rna-folding -f test.parquet -m "org_Model0"
+
+kaggle competitions submit -c stanford-ribonanza-rna-folding -f ribonanzanet.parquet -m "output of post-competition model RibonanzaNet"
+
+kaggle competitions submit -c stanford-ribonanza-rna-folding -f solution_ribonanza.parquet -m "solution_ribonanza.parquet should be 0"
 
 ## Configuration File
 
