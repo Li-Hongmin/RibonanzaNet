@@ -1,4 +1,4 @@
-# %%
+
 import pandas as pd
 import torch
 import matplotlib.pyplot as plt
@@ -111,10 +111,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.backends.mps.is_available():
     device= torch.device("mps")
 model=finetuned_RibonanzaNet(config).to(device)
-#1. Initial Model Training-only confident labels:
-model.load_state_dict(torch.load("RibonanzaNet-Deg_21.pt",map_location=device))
-
-# %%
 data=pd.read_json("train_pseudo.json",lines=True).reset_index(drop=True)
 data_noisy = data.loc[data['signal_to_noise']<=1].reset_index(drop=True)
 data=data.loc[data['signal_to_noise']>1].reset_index(drop=True)
@@ -203,97 +199,6 @@ train_loader3=DataLoader(RNA_Dataset(train_step3,130),batch_size=32,shuffle=True
 highSN_loader=DataLoader(RNA_Dataset(highSN),batch_size=32,shuffle=True)
 val_loader = DataLoader(RNA_Dataset(val_split),batch_size=32,shuffle=False)
 
-# %%
-from ranger import Ranger
-from tqdm import tqdm
-#loss function
-def MCRMAE(y_pred, y_true):
-    # 计算每列的MAE
-    colwise_mae = torch.mean(torch.abs(y_true - y_pred), dim=0)
-    # 计算列MAE的均值
-    MCRMAE = torch.mean(colwise_mae)
-    return MCRMAE
-
-epochs=20
-cos_epoch=15
-
-best_loss=np.inf
-optimizer = Ranger(model.parameters(), lr=0.001)
-
-
-criterion=MCRMAE
-lr = 0.001
-# schedule=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=(epochs-cos_epoch)*len(train_loader))
-
-
-for epoch in range(epochs):
-    model.train()
-    tbar=tqdm(train_loader3)
-    total_loss=0
-    oom=0
-    for idx, batch in enumerate(tbar):
-        sequence=batch['sequence'].to(device)
-        labels=batch['labels'].float().to(device)
-        seq_length=batch['length'].to(device)
-        output=model(sequence)
-        
-        sliced_outputs = []
-        slice_labels = []       
-
-        for i in range(output.size(0)):  # Loop through each batch
-            # Slice each batch up to its corresponding sequence length
-            sliced_output = output[i, :seq_length[i], :]
-            sliced_label = labels[i, :seq_length[i], :]
-            # Append the sliced output to the list
-            sliced_outputs.append(sliced_output)
-            slice_labels.append(sliced_label)
-
-        # Concatenate all sliced outputs along the first dimension
-        final_output = torch.cat(sliced_outputs, dim=0)
-        final_labels = torch.cat(slice_labels, dim=0)
-        
-        loss=criterion(final_output,final_labels)
-        loss=loss.mean()
-
-        loss.backward()
-
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 10)
-        optimizer.step()
-        optimizer.zero_grad()
-
-#         if (epoch+1)>cos_epoch:
-#             schedule.step()
-        #schedule.step()
-        total_loss+=loss.item()
-
-        tbar.set_description(f"Epoch {epoch + 1} Loss: {total_loss/(idx+1)}")
-        #break
-
-    tbar=tqdm(val_loader)
-    model.eval()
-    val_preds=[]
-    val_loss=0
-    for idx, batch in enumerate(tbar):
-        sequence=batch['sequence'].to(device)
-        labels=batch['labels'].float().to(device)
-
-        with torch.no_grad():
-            output=model(sequence)
-            
-            loss=criterion(output[:,:68],labels)
-            loss=loss.mean()
-        val_loss+=loss.item()
-        val_preds.append([labels.cpu().numpy(),output.cpu().numpy()])
-    val_loss=val_loss/len(tbar)
-    print(f"val loss: {val_loss}")
-    if val_loss<best_loss:
-        best_loss=val_loss
-        best_preds=val_preds
-        torch.save(model.state_dict(),'RibonanzaNet-Deg_30.pt')
-
-    # 1.053595052265986 train loss after epoch 0
-
-# %%
 from ranger import Ranger
 from tqdm import tqdm
 #loss function
@@ -314,9 +219,14 @@ optimizer = Ranger(model.parameters(), weight_decay=0.001, lr=0.001)
 criterion=MCRMAE
 lr = 0.001
 schedule=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=(epochs-cos_epoch)*len(highSN_loader))
+# multi-gpu 
 
 model.load_state_dict(torch.load("RibonanzaNet-Deg_30.pt",map_location=device))
-
+if torch.cuda.device_count() > 1:
+    
+    import torch.nn as nn
+    print("Let's use", torch.cuda.device_count(), "GPUs!")
+    model = nn.DataParallel(model)
 for epoch in range(epochs):
     model.train()
     tbar=tqdm(highSN_loader)
@@ -364,8 +274,7 @@ for epoch in range(epochs):
     if val_loss<best_loss:
         best_loss=val_loss
         best_preds=val_preds
-        torch.save(model.state_dict(),'RibonanzaNet-Deg_31.pt')
+        torch.save(model.state_dict(),'RibonanzaNet-Deg_31_retrain.pt')
 
     # 1.053595052265986 train loss after epoch 0
-
 

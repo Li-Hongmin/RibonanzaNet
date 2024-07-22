@@ -86,6 +86,12 @@ parser.add_argument('--para', type=str, default="RibonanzaNet-Deg_31.pt")
 args = parser.parse_args()
 model.load_state_dict(torch.load(args.para,map_location=device))
 
+# multi-gpu 
+if torch.cuda.device_count() > 1:
+    
+    import torch.nn as nn
+    print("Let's use", torch.cuda.device_count(), "GPUs!")
+    model = nn.DataParallel(model)
 # %% [markdown]
 # # Make predictions
 
