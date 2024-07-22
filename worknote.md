@@ -46,3 +46,7 @@ cd /work/gs58/d58004/ideas/RibonanzaNet
 accelerate launch --mixed_precision=fp16 --dynamo_backend=no inference.py --config_path configs/pairwise.yaml
 
 ~                                                                   
+
+export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
+python make_submission.py --config_path configs/pairwise.yaml
+kaggle competitions submit -c stanford-ribonanza-rna-folding -f test.parquet -m "ribonanzaNet infer original code"
