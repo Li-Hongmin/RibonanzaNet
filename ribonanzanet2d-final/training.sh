@@ -20,6 +20,7 @@ echo "Start training"
 echo “Step2....................”
 #python step2.py
 echo “Step3....................”
-python step3.py
+python step3_68.py
 echo "make_submission...................."
-python make_submission.py
+python make_submission.py --para RibonanzaNet-Deg_30_68.pt
+python make_submission.py --para RibonanzaNet-Deg_31_68.pt
