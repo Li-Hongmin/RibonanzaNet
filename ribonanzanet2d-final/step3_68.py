@@ -199,7 +199,7 @@ class RNA_Dataset(Dataset):
         return {'sequence':sequence,
                 "length": seq_len,
                 'labels':labels}
-train_loader3=DataLoader(RNA_Dataset(train_step3),batch_size=32,shuffle=True)
+train_loader3=DataLoader(RNA_Dataset(train_step3,130),batch_size=32,shuffle=True)
 highSN_loader=DataLoader(RNA_Dataset(highSN),batch_size=32,shuffle=True)
 val_loader = DataLoader(RNA_Dataset(val_split),batch_size=32,shuffle=False)
 
@@ -236,7 +236,7 @@ for epoch in range(epochs):
         labels=batch['labels'].float().to(device)
         output=model(sequence)
 
-        loss=criterion(output[:,:68],labels)
+        loss=criterion(output[:,:68],labels[:,:68])
         loss=loss.mean()
         # seq_length=batch['length'].to(device)
         # output=model(sequence)
