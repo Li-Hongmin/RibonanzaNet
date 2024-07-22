@@ -78,7 +78,7 @@ if torch.backends.mps.is_available():
     device= torch.device("mps")
 model=finetuned_RibonanzaNet(config).to(device)
 #1. Initial Model Training-only confident labels:
-model.load_state_dict(torch.load("../ribonanzanet-weights/RibonanzaNet-Deg31.pt",map_location=device))
+model.load_state_dict(torch.load("../ribonanzanet-weights/RibonanzaNet-Deg_31.pt",map_location=device))
 
 # %% [markdown]
 # # Make predictions
