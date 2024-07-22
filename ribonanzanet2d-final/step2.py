@@ -186,7 +186,6 @@ for epoch in range(epochs):
     for idx, batch in enumerate(tbar):
         sequence=batch['sequence'].to(device)
         labels=batch['labels'].float().to(device)
-        sequence=sequence.requires_grad_(True)
         output=model(sequence)
 
         loss=criterion(output[:,:68],labels)
