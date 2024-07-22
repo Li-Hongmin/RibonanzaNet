@@ -41,4 +41,4 @@ sub = sub.with_columns(
     pl.col("reactivity_2A3_MaP").round(2).map_elements(lambda x: max(x, 0), return_dtype=float)
 )
 sub.write_parquet("test.parquet")
-sub.write_csv("test.csv")
+#sub.write_csv("test.csv")
