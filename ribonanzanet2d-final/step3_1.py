@@ -222,11 +222,11 @@ schedule=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=(epochs-cos
 # multi-gpu 
 
 model.load_state_dict(torch.load("RibonanzaNet-Deg_30.pt",map_location=device))
-if torch.cuda.device_count() > 1:
+# if torch.cuda.device_count() > 1:
     
-    import torch.nn as nn
-    print("Let's use", torch.cuda.device_count(), "GPUs!")
-    model = nn.DataParallel(model)
+#     import torch.nn as nn
+#     print("Let's use", torch.cuda.device_count(), "GPUs!")
+#     model = nn.DataParallel(model)
 for epoch in range(epochs):
     model.train()
     tbar=tqdm(highSN_loader)
