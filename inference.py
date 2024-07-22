@@ -58,7 +58,7 @@ models=[]
 for i in range(1):
     model=RibonanzaNet(config)#.cuda()
     model.eval()
-    model.load_state_dict(torch.load(f"models/model{i}.pt",map_location='cpu'))
+    model.load_state_dict(torch.load("ribonanzanet-weights/RibonanzaNet.pt",map_location='cpu'))
     models.append(model)
 
 #exit()
