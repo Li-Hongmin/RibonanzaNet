@@ -18,7 +18,7 @@ echo "Start training"
 # echo "Step1...................."
 # python step1.py
 echo “Step2....................”
-python step2.py
+#python step2.py
 echo “Step3....................”
 python step3.py
 echo "make_submission...................."
