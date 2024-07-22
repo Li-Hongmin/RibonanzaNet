@@ -84,7 +84,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--para', type=str, default="RibonanzaNet-Deg_31.pt")
 
 args = parser.parse_args()
-model.load_state_dict(torch.load("RibonanzaNet-Deg_31.pt",map_location=device))
+model.load_state_dict(torch.load(args.para,map_location=device))
 
 # %% [markdown]
 # # Make predictions
