@@ -106,13 +106,13 @@ class RNA_Dataset(Dataset):
                 'labels':labels}
 
 # %%
-config=load_config_from_yaml("/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet2d-final/configs/pairwise.yaml")
+config=load_config_from_yaml("configs/pairwise.yaml")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.backends.mps.is_available():
     device= torch.device("mps")
-model=finetuned_RibonanzaNet(config,pretrained=False).to(device)
+model=finetuned_RibonanzaNet(config).to(device)
 #1. Initial Model Training-only confident labels:
-model.load_state_dict(torch.load("/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet-weights/RibonanzaNet-Deg21.pt",map_location=device))
+model.load_state_dict(torch.load("../ribonanzanet-weights/RibonanzaNet-Deg21.pt",map_location=device))
 
 # %%
 data=pd.read_json("train_pseudo.json",lines=True).reset_index(drop=True)

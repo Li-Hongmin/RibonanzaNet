@@ -28,7 +28,7 @@ class RNA2D_Dataset(Dataset):
         return {'sequence':sequence}
 
 # %%
-test_data=pd.read_json("/Users/lihongmin/Research/24 mRNAdegredation/RNAdegformer/src/OpenVaccine/data/test.json",lines=True)
+test_data=pd.read_json("/work/gs58/d58004/datasets/openVaccine/test.json",lines=True)
 test_dataset=RNA2D_Dataset(test_data)
 test_dataset[0]
 
@@ -72,13 +72,13 @@ class finetuned_RibonanzaNet(RibonanzaNet):
         return output#.squeeze(-1)
 
 # %%
-config=load_config_from_yaml("/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet2d-final/configs/pairwise.yaml")
+config=load_config_from_yaml("configs/pairwise.yaml")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.backends.mps.is_available():
     device= torch.device("mps")
 model=finetuned_RibonanzaNet(config).to(device)
 #1. Initial Model Training-only confident labels:
-model.load_state_dict(torch.load("/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet-weights/RibonanzaNet-Deg.pt",map_location=device))
+model.load_state_dict(torch.load("../ribonanzanet-weights/RibonanzaNet-Deg31.pt",map_location=device))
 
 # %% [markdown]
 # # Make predictions
