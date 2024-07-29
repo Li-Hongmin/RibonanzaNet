@@ -1,0 +1,46 @@
+Tue Jul 23 00:35:51 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA A100-SXM4-40GB          On  | 00000000:A4:00.0 Off |                    0 |
+| N/A   24C    P0              53W / 400W |      4MiB / 40960MiB |      0%      Default |
+|                                         |                      |             Disabled |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+Start training
+“Step2....................”
+Traceback (most recent call last):
+  File "/work/02/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/step2.py", line 106, in <module>
+    config=load_config_from_yaml("/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet2d-final/configs/pairwise.yaml")
+  File "/work/02/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/step2.py", line 49, in load_config_from_yaml
+    with open(file_path, 'r') as file:
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet2d-final/configs/pairwise.yaml'
+“Step3....................”
+Traceback (most recent call last):
+  File "/work/02/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/step3.py", line 109, in <module>
+    config=load_config_from_yaml("/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet2d-final/configs/pairwise.yaml")
+  File "/work/02/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/step3.py", line 49, in load_config_from_yaml
+    with open(file_path, 'r') as file:
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/lihongmin/Research/ideas/RibonanzaNet/ribonanzanet2d-final/configs/pairwise.yaml'
+make_submission....................
+Traceback (most recent call last):
+  File "/work/02/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/make_submission.py", line 31, in <module>
+    test_data=pd.read_json("/Users/lihongmin/Research/24 mRNAdegredation/RNAdegformer/src/OpenVaccine/data/test.json",lines=True)
+  File "/work/02/gs58/d58004/mambaforge/envs/torch/lib/python3.9/site-packages/pandas/io/json/_json.py", line 780, in read_json
+    json_reader = JsonReader(
+  File "/work/02/gs58/d58004/mambaforge/envs/torch/lib/python3.9/site-packages/pandas/io/json/_json.py", line 893, in __init__
+    data = self._get_data_from_filepath(filepath_or_buffer)
+  File "/work/02/gs58/d58004/mambaforge/envs/torch/lib/python3.9/site-packages/pandas/io/json/_json.py", line 949, in _get_data_from_filepath
+    raise FileNotFoundError(f"File {filepath_or_buffer} does not exist")
+FileNotFoundError: File /Users/lihongmin/Research/24 mRNAdegredation/RNAdegformer/src/OpenVaccine/data/test.json does not exist
