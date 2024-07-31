@@ -206,6 +206,7 @@ class ConvTransformerEncoderLayer(nn.Module):
             d_conv=4,    # Local convolution width
             expand=2,    # Block expansion factor
         )
+        print("mamba is used")
 
         self.self_attn = MultiHeadAttention(d_model, nhead, d_model//nhead, d_model//nhead, dropout=dropout)
 

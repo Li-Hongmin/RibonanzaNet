@@ -67,7 +67,7 @@ def main(args):
     if torch.backends.mps.is_available():
         device = torch.device("mps")
     model = finetuned_RibonanzaNet(config).to(device)
-    model.load_state_dict(torch.load(args.model_path, map_location=device))
+    model.load_state_dict(torch.load(args.model_path, map_location=device), strict=False)
 
     # Load and process data
     data, data_noisy, test107, test130 = load_data(args.train_pseudo_path, args.test_pseudo_107_path, args.test_pseudo_130_path, args.noisy_threshold)
@@ -96,7 +96,7 @@ def main(args):
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
     # Annealed training with high SN data
-    model.load_state_dict(torch.load(last_model_path, map_location=device))
+    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
     optimizer = Ranger(model.parameters(), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
     # save_path with parameters 
