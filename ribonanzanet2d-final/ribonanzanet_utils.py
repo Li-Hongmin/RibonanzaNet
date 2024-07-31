@@ -123,20 +123,24 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
 
 # Model class
 class finetuned_RibonanzaNet(RibonanzaNet):
-    def __init__(self, config, pretrained=False):
+    def __init__(self, config, use_mamba=False):
         super(finetuned_RibonanzaNet, self).__init__(config)
-        self.mamba= Mamba2(
-            # This module uses roughly 3 * expand * d_model^2 parameters
-            d_model=256, # Model dimension d_model
-            d_state=128,  # SSM state expansion factor, typically 64 or 128
-            d_conv=4,    # Local convolution width
-            expand=2,    # Block expansion factor
-        )
-        print("mamba is used")
-        self.decoder = nn.Linear(256, 5)
+        self.use_mamba = use_mamba
+        if use_mamba:
+            self.mamba= Mamba2(
+                # This module uses roughly 3 * expand * d_model^2 parameters
+                d_model=256, # Model dimension d_model
+                d_state=128,  # SSM state expansion factor, typically 64 or 128
+                d_conv=4,    # Local convolution width
+                expand=2,    # Block expansion factor
+            )
+            print("mamba is used")
+            self.decoder = nn.Linear(256, 5)
+
 
     def forward(self, src):
         sequence_features, pairwise_features = self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
-        sequence_features = self.mamba(sequence_features)
+        if self.use_mamba:
+            sequence_features = self.mamba(sequence_features)
         output = self.decoder(sequence_features)
         return output.squeeze(-1)

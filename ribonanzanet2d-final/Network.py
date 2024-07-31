@@ -195,18 +195,21 @@ class MultiHeadAttention(nn.Module):
 class ConvTransformerEncoderLayer(nn.Module):
 
     def __init__(self, d_model, nhead, 
-                 dim_feedforward, pairwise_dimension, use_triangular_attention, dropout=0.1, k = 3,
+                 dim_feedforward, pairwise_dimension, use_mamba, use_triangular_attention, dropout=0.1, k = 3,
                  ):
         super(ConvTransformerEncoderLayer, self).__init__()
         #self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        # self.mamba= Mamba2(
-        #     # This module uses roughly 3 * expand * d_model^2 parameters
-        #     d_model=d_model, # Model dimension d_model
-        #     d_state=64,  # SSM state expansion factor, typically 64 or 128
-        #     d_conv=4,    # Local convolution width
-        #     expand=2,    # Block expansion factor
-        # )
-        # print("mamba is used")
+        self.use_mamba=use_mamba
+        if self.use_mamba:
+            self.mamba= Mamba2(
+                # This module uses roughly 3 * expand * d_model^2 parameters
+                d_model=d_model, # Model dimension d_model
+                d_state=64,  # SSM state expansion factor, typically 64 or 128
+                d_conv=4,    # Local convolution width
+                expand=2,    # Block expansion factor
+            )
+            print("mamba is used")
+        
 
         self.self_attn = MultiHeadAttention(d_model, nhead, d_model//nhead, d_model//nhead, dropout=dropout)
 
@@ -273,8 +276,8 @@ class ConvTransformerEncoderLayer(nn.Module):
         # exit()
         src = src + self.conv(src.permute(0,2,1)).permute(0,2,1)
         src = self.norm3(src)
-        
-        # src = self.mamba(src)
+        if self.use_mamba:
+            src=self.mamba(src)
         # print(src.shape)
         # exit()
 
@@ -466,6 +469,7 @@ class RibonanzaNet(nn.Module):
             self.transformer_encoder.append(ConvTransformerEncoderLayer(d_model = config.ninp, nhead = config.nhead,
                                                                         dim_feedforward = nhid, 
                                                                         pairwise_dimension= config.pairwise_dimension,
+                                                                        use_mamba=config.use_mamba,
                                                                         use_triangular_attention=config.use_triangular_attention,
                                                                         dropout = config.dropout, k=k))
         self.transformer_encoder= nn.ModuleList(self.transformer_encoder)

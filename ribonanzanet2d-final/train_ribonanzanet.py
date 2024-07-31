@@ -67,7 +67,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available():
         device = torch.device("mps")
-    model = finetuned_RibonanzaNet(config).to(device)
+    model = finetuned_RibonanzaNet(config, config.use_mamba).to(device)
     model.load_state_dict(torch.load(args.model_path, map_location=device), strict=False)
 
     # Load and process data
@@ -93,7 +93,7 @@ def main(args):
     # crate directory if not exists
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
+    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
     # Annealed training with high SN data
@@ -101,7 +101,7 @@ def main(args):
     optimizer = Ranger(model.parameters(), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
     # save_path with parameters 
-    save_path = f"{args.save_dirv}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
+    save_path = f"{args.save_dirv}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-"
     train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=args.save_path, schedule=schedule)
 
 if __name__ == "__main__":
