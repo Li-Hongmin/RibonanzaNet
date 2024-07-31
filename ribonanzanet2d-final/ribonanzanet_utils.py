@@ -7,6 +7,8 @@ from torch.utils.data import Dataset
 from sklearn.model_selection import StratifiedKFold
 from Network import RibonanzaNet
 import torch.nn as nn
+from mamba_ssm import Mamba2
+
 # Set seed for reproducibility
 def set_seed(seed=0):
     torch.manual_seed(seed)
@@ -123,11 +125,18 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
 class finetuned_RibonanzaNet(RibonanzaNet):
     def __init__(self, config, pretrained=False):
         super(finetuned_RibonanzaNet, self).__init__(config)
-        if pretrained:
-            self.load_state_dict(torch.load(config.pretrained_path, map_location='cpu'))
+        self.mamba= Mamba2(
+            # This module uses roughly 3 * expand * d_model^2 parameters
+            d_model=256, # Model dimension d_model
+            d_state=128,  # SSM state expansion factor, typically 64 or 128
+            d_conv=4,    # Local convolution width
+            expand=2,    # Block expansion factor
+        )
+        print("mamba is used")
         self.decoder = nn.Linear(256, 5)
 
     def forward(self, src):
         sequence_features, pairwise_features = self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
+        sequence_features = self.mamba(sequence_features)
         output = self.decoder(sequence_features)
         return output.squeeze(-1)
