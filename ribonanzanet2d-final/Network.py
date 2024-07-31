@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from einops import rearrange, repeat, reduce
 from einops.layers.torch import Rearrange
-
+from mamba_ssm import Mamba2
 import torch.utils.checkpoint as checkpoint
 
 
@@ -199,6 +199,14 @@ class ConvTransformerEncoderLayer(nn.Module):
                  ):
         super(ConvTransformerEncoderLayer, self).__init__()
         #self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.mamba= Mamba2(
+            # This module uses roughly 3 * expand * d_model^2 parameters
+            d_model=d_model, # Model dimension d_model
+            d_state=64,  # SSM state expansion factor, typically 64 or 128
+            d_conv=4,    # Local convolution width
+            expand=2,    # Block expansion factor
+        )
+
         self.self_attn = MultiHeadAttention(d_model, nhead, d_model//nhead, d_model//nhead, dropout=dropout)
 
 
@@ -259,7 +267,8 @@ class ConvTransformerEncoderLayer(nn.Module):
         
         src = src*src_mask.float().unsqueeze(-1)
 
-        res = src
+        src = self.mamba(src)
+        
         # print(self.norm3(self.conv(src.permute(0,2,1)).permute(0,2,1)).shape)
         # exit()
         src = src + self.conv(src.permute(0,2,1)).permute(0,2,1)
