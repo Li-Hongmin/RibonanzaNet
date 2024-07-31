@@ -7,6 +7,19 @@ from ribonanzanet_utils import *
 import os 
 os.environ["HOME"] = "/work/02/gs58/d58004"  # Change this to an appropriate path
 
+def freeze_existing_layers(model, previous_state_dict):
+    # Freeze all layers present in the previous state dict
+    for name, param in model.named_parameters():
+        if name in previous_state_dict:
+            param.requires_grad = False
+        else:
+            param.requires_grad = True
+
+def unfreeze_all_layers(model):
+    # Unfreeze all layers
+    for param in model.parameters():
+        param.requires_grad = True
+        
 def train_model(model, train_loader, val_loader, epochs, optimizer, criterion, save_path, schedule=None):
     best_loss = np.inf
     device = next(model.parameters()).device
@@ -68,9 +81,18 @@ def main(args):
     if torch.backends.mps.is_available():
         device = torch.device("mps")
     model = finetuned_RibonanzaNet(config, config.use_mamba).to(device)
-    model.load_state_dict(torch.load(args.model_path, map_location=device), strict=False)
+    
+    # Load previous model state
+    print(f"Loading model from {args.model_path}")
+    previous_state_dict = torch.load(args.model_path, map_location=device)
+    model.load_state_dict(previous_state_dict, strict=False)
+
+    # Freeze existing layers and unfreeze new layers
+    print("Freezing existing layers")
+    freeze_existing_layers(model, previous_state_dict)
 
     # Load and process data
+    print("Loading and processing data")
     data, data_noisy, test107, test130 = load_data(args.train_pseudo_path, args.test_pseudo_107_path, args.test_pseudo_130_path, args.noisy_threshold)
     train_split, val_split = split_data(data)
 
@@ -86,23 +108,31 @@ def main(args):
     train_loader3 = DataLoader(RNA_Dataset(train_step3, args.max_seq_length), batch_size=args.batch_size, shuffle=True)
     highSN_loader = DataLoader(RNA_Dataset(highSN, 68), batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(RNA_Dataset(val_split, 68), batch_size=args.batch_size, shuffle=False)
-
-    # Initial training with pseudo labels
-    optimizer = Ranger(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    # save_path with parameters
-    # crate directory if not exists
+    
+    # Initial training with pseudo labels by freezing existing layers
+    optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=args.weight_decay)
+    # Save path with parameters
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-"
+    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-0-freezed-"
+    last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
+    
+    # Unfreeze all layers
+    print("Unfreezing all layers")
+    unfreeze_all_layers(model)
+    # Retrain the model without freezing any layers
+    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-1-unfreezed-"
+    
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
     # Annealed training with high SN data
+    print("Annealed training with high SN data")
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
-    optimizer = Ranger(model.parameters(), weight_decay=args.weight_decay, lr=args.lr)
+    optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
-    # save_path with parameters 
-    save_path = f"{args.save_dirv}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-"
-    train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=args.save_path, schedule=schedule)
+    save_path = f"{args.save_dir}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-2-annealed-"
+    train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train RibonanzaNet with pseudo labels")
@@ -120,6 +150,5 @@ if __name__ == "__main__":
     parser.add_argument("--max_seq_length", type=int, default=130, help="Maximum sequence length")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
     
-
     args = parser.parse_args()
     main(args)
