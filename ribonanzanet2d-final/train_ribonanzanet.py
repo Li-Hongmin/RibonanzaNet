@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from ranger import Ranger
 from tqdm import tqdm
 from ribonanzanet_utils import *
+import os 
 
 def train_model(model, train_loader, val_loader, epochs, optimizer, criterion, save_path, schedule=None):
     best_loss = np.inf
@@ -88,7 +89,15 @@ def main(args):
     # Initial training with pseudo labels
     optimizer = Ranger(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     # save_path with parameters
-    save_path = f"{args.save_path}pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
+    # crate directory if not exists
+    if not os.path.exists(args.save_dir):
+        os.makedirs(args.save_dir)
+    save_path = f"{args.# The `save_dir` argument in the script is used to specify the directory path
+    # where the trained model state dictionary will be saved. If the directory
+    # specified by `save_dir` does not exist, the script will create it before
+    # saving the model. This allows for organizing and storing the trained model
+    # files in a specific location for easy access and management.
+    save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
     # Annealed training with high SN data
@@ -96,7 +105,7 @@ def main(args):
     optimizer = Ranger(model.parameters(), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
     # save_path with parameters 
-    save_path = f"{args.save_path}highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
+    save_path = f"{args.save_dirv}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
     train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=args.save_path, schedule=schedule)
 
 if __name__ == "__main__":
@@ -106,7 +115,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_pseudo_path", type=str, default="train_pseudo.json", help="Path to the train pseudo JSON file")
     parser.add_argument("--test_pseudo_107_path", type=str, default="test_pseudo_107.json", help="Path to the test pseudo 107 JSON file")
     parser.add_argument("--test_pseudo_130_path", type=str, default="test_pseudo_130.json", help="Path to the test pseudo 130 JSON file")
-    parser.add_argument("--save_path", type=str, default="./", help="Path to save the trained model state dict")
+    parser.add_argument("--save_dir", type=str, default="saved_models", help="Path to save the trained model state dict")
     parser.add_argument("--sn_threshold", type=float, default=5.0, help="Signal-to-noise threshold for high SN filtering")
     parser.add_argument("--noisy_threshold", type=float, default=1.0, help="Threshold for noisy data filtering")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
