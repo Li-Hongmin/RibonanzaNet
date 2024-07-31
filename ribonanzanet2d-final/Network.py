@@ -298,7 +298,7 @@ class ConvTransformerEncoderLayer(nn.Module):
         # print(src_mask)
         # exit()
         if use_gradient_checkpoint:
-            pairwise_features=pairwise_features+checkpoint.checkpoint(self.custom(self.outer_product_mean), src)
+            pairwise_features=pairwise_features+checkpoint.checkpoint(self.custom(self.outer_product_mean), src, use_reentrant=True)
             pairwise_features=pairwise_features+self.pair_dropout_out(
                 checkpoint.checkpoint(self.custom(self.triangle_update_out), pairwise_features, src_mask))
             pairwise_features=pairwise_features+self.pair_dropout_in(
@@ -314,7 +314,7 @@ class ConvTransformerEncoderLayer(nn.Module):
             pairwise_features=pairwise_features+self.pair_attention_dropout_in(self.triangle_attention_in(pairwise_features,src_mask))
 
         if use_gradient_checkpoint:
-            pairwise_features=pairwise_features+checkpoint.checkpoint(self.custom(self.pair_transition),pairwise_features)
+            pairwise_features=pairwise_features+checkpoint.checkpoint(self.custom(self.pair_transition),pairwise_features, use_reentrant=True)
         else:
             pairwise_features=pairwise_features+self.pair_transition(pairwise_features)
         if return_aw:
@@ -502,7 +502,7 @@ class RibonanzaNet(nn.Module):
         # outer_product = rearrange(outer_product, 'b i j c d -> b i j (c d)')
         # print(outer_product.shape)
         if self.use_gradient_checkpoint:
-            pairwise_features=checkpoint.checkpoint(self.custom(self.outer_product_mean), src)
+            pairwise_features=checkpoint.checkpoint(self.custom(self.outer_product_mean), src, use_reentrant=True)
             pairwise_features=pairwise_features+self.pos_encoder(src)
         else:
             pairwise_features=self.outer_product_mean(src)
