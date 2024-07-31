@@ -92,12 +92,7 @@ def main(args):
     # crate directory if not exists
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    save_path = f"{args.# The `save_dir` argument in the script is used to specify the directory path
-    # where the trained model state dictionary will be saved. If the directory
-    # specified by `save_dir` does not exist, the script will create it before
-    # saving the model. This allows for organizing and storing the trained model
-    # files in a specific location for easy access and management.
-    save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
+    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
     # Annealed training with high SN data
