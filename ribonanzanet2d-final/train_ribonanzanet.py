@@ -14,7 +14,9 @@ def freeze_existing_layers(model, previous_state_dict):
             param.requires_grad = False
         else:
             param.requires_grad = True
-
+    # Unfreeze the last layer
+    for param in model.decoder.parameters():
+        param.requires_grad = True
 def unfreeze_all_layers(model):
     # Unfreeze all layers
     for param in model.parameters():
@@ -80,7 +82,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available():
         device = torch.device("mps")
-    model = finetuned_RibonanzaNet(config, config.use_mamba).to(device)
+    model = finetuned_RibonanzaNet(config, False).to(device)
     
     # Load previous model state
     print(f"Loading model from {args.model_path}")

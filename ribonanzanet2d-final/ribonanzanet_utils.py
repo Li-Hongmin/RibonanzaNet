@@ -135,7 +135,7 @@ class finetuned_RibonanzaNet(RibonanzaNet):
                 expand=2,    # Block expansion factor
             )
             print("mamba is used")
-            self.decoder = nn.Linear(256, 5)
+        self.decoder = nn.Linear(256, 5)
 
 
     def forward(self, src):
