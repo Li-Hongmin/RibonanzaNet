@@ -6,6 +6,7 @@ from tqdm import tqdm
 from ribonanzanet_utils import *
 import os 
 os.environ["HOME"] = "/work/02/gs58/d58004"  # Change this to an appropriate path
+os.environ["TRANSFORMERS_CACHE"] = "/work/02/gs58/d58004/cache"  # Set a writable path for cache
 
 def freeze_existing_layers(model, previous_state_dict):
     # Freeze all layers present in the previous state dict

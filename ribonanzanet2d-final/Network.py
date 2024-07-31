@@ -200,6 +200,7 @@ class ConvTransformerEncoderLayer(nn.Module):
         super(ConvTransformerEncoderLayer, self).__init__()
         #self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.use_mamba=use_mamba
+        print(f"using mamba: {use_mamba}")
         if self.use_mamba:
             self.mamba= Mamba2(
                 # This module uses roughly 3 * expand * d_model^2 parameters
