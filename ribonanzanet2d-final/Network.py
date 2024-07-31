@@ -540,6 +540,7 @@ class RibonanzaNet(nn.Module):
         # print(outer_product.shape)
         if self.use_gradient_checkpoint:
             #print("using grad checkpointing")
+            pairwise_features=checkpoint.checkpoint(self.custom(self.outer_product_mean), src)
             pairwise_features=pairwise_features+self.pos_encoder(src)
         else:
             pairwise_features=self.outer_product_mean(src)
