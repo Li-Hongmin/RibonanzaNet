@@ -5,6 +5,7 @@ from ranger import Ranger
 from tqdm import tqdm
 from ribonanzanet_utils import *
 import os 
+os.environ["HOME"] = "/work/02/gs58/d58004"  # Change this to an appropriate path
 
 def train_model(model, train_loader, val_loader, epochs, optimizer, criterion, save_path, schedule=None):
     best_loss = np.inf
