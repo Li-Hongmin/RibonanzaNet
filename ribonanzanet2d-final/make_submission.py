@@ -139,8 +139,6 @@ for i,l in enumerate(['reactivity', 'deg_Mg_pH10', 'deg_pH10', 'deg_Mg_50C', 'de
 
 name = args.para.split('/')[-1]
 dir = 'submissions'
-import os
-os.makedirs(dir, exist_ok=True)
 sub.to_csv(f'{dir}/submission_{name}.csv',index=False)
 
 # %%
