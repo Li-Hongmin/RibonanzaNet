@@ -136,8 +136,12 @@ sub['id_seqpos']=ids
 
 for i,l in enumerate(['reactivity', 'deg_Mg_pH10', 'deg_pH10', 'deg_Mg_50C', 'deg_50C']):
     sub[l]=preds[:,i]
-    
-sub.to_csv(f'submission_{args.para}.csv',index=False)
+
+name = args.para.split('/')[-1]
+dir = 'submissions'
+import os
+os.makedirs(dir, exist_ok=True)
+sub.to_csv(f'{dir}/submission_{name}.csv',index=False)
 
 # %%
 
