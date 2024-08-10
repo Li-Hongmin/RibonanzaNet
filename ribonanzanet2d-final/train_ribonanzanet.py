@@ -54,7 +54,7 @@ def train_model(model, train_loader, val_loader, epochs, optimizer, criterion, s
         if val_loss < best_loss:
             best_loss = val_loss
             best_preds = val_preds
-            save_model_path = f"{save_path}FinetuneDeg-epoch{epoch + 1}.pt"
+            save_model_path = f"{save_path}FinetuneDeg-epoch{str(epoch + 1).zfill(3)}.pt"
             torch.save(model.state_dict(), save_model_path)
     return save_model_path
 
@@ -112,7 +112,7 @@ def main(args):
     highSN_loader = DataLoader(RNA_Dataset(highSN, 68), batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(RNA_Dataset(val_split, 68), batch_size=args.batch_size, shuffle=False)
     
-    # Initial training with pseudo labels by freezing existing layers
+    # Initial training with pseudo labels by freezing existing layers and unfreezing last layers
     optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr*10)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
 
