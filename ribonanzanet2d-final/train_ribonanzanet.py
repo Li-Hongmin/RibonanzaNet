@@ -54,7 +54,7 @@ def train_model(model, train_loader, val_loader, epochs, optimizer, criterion, s
         if val_loss < best_loss:
             best_loss = val_loss
             best_preds = val_preds
-            save_model_path = f"{save_path}FinetuneDeg-epoch{str(epoch + 1).zfill(3)}.pt"
+            save_model_path = f"{save_path}FinetuneDeg-epoch.pt"
             torch.save(model.state_dict(), save_model_path)
     return save_model_path
 
@@ -83,7 +83,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available():
         device = torch.device("mps")
-    model = finetuned_RibonanzaNet(config, False).to(device)
+    model = finetuned_RibonanzaNet(config, config.use_mamba_end).to(device)
     
     # Load previous model state
     print(f"Loading model from {args.model_path}")
@@ -119,7 +119,7 @@ def main(args):
     # Save path with parameters
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-0-freezed-"
+    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{config.use_mamba_end}-0-freezed-"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
     
     # Unfreeze all layers
@@ -127,7 +127,7 @@ def main(args):
     unfreeze_all_layers(model)
     # Retrain the model without freezing any layers
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
-    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-1-unfreezed-"
+    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{config.use_mamba_end}-1-unfreezed-"
     
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
@@ -136,7 +136,7 @@ def main(args):
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
     optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
-    save_path = f"{args.save_dir}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-2-annealed-"
+    save_path = f"{args.save_dir}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{config.use_mamba_end}-2-annealed-"
     train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
 
 if __name__ == "__main__":
@@ -154,6 +154,8 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", type=float, default=0.001, help="Weight decay for optimizer")
     parser.add_argument("--max_seq_length", type=int, default=130, help="Maximum sequence length")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
+    # parser.add_argument("--use_mamba_start", type=bool, default=False, help="Use Mamba2 at beginning of the model")
+    parser.add_argument("--use_mamba_end", type=bool, default=False, help="Use Mamba2 at end of the model")
     
     args = parser.parse_args()
     main(args)

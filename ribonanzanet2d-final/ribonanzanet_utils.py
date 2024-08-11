@@ -123,24 +123,37 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
 
 # Model class
 class finetuned_RibonanzaNet(RibonanzaNet):
-    def __init__(self, config, use_mamba=False):
+    def __init__(self, config, use_mamba_start=False, use_mamba_end=False):
         super(finetuned_RibonanzaNet, self).__init__(config)
-        self.use_mamba = use_mamba
-        if use_mamba:
-            self.mamba= Mamba2(
+        self.use_mamba_start = use_mamba_start
+        self.use_mamba_end = use_mamba_end
+        # if use_mamba_start:
+        #     self.mamba_start = Mamba2(
+        #         # This module uses roughly 3 * expand * d_model^2 parameters
+        #         d_model=256, # Model dimension d_model
+        #         d_state=128,  # SSM state expansion factor, typically 64 or 128
+        #         d_conv=4,    # Local convolution width
+        #         expand=2,    # Block expansion factor
+        #     )
+        #     print("mamba is used at the start")
+        if use_mamba_end:
+            self.mamba_end= Mamba2(
                 # This module uses roughly 3 * expand * d_model^2 parameters
                 d_model=256, # Model dimension d_model
                 d_state=128,  # SSM state expansion factor, typically 64 or 128
                 d_conv=4,    # Local convolution width
                 expand=2,    # Block expansion factor
             )
-            print("mamba is used")
+            print("mamba is used at the end")
         self.decoder = nn.Linear(256, 5)
 
 
     def forward(self, src):
+        # if self.use_mamba_start:
+        #     sequence_features = self.mamba_start(sequence_features)
+        
         sequence_features, pairwise_features = self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
-        if self.use_mamba:
-            sequence_features = self.mamba(sequence_features)
+        if self.use_mamba_end:
+            sequence_features = self.mamba_end(sequence_features)
         output = self.decoder(sequence_features)
         return output.squeeze(-1)
