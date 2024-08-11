@@ -31,3 +31,42 @@ kaggle competitions submit -c stanford-covid-vaccine -f submission_RibonanzaNet-
 
 kaggle competitions submit -c stanford-covid-vaccine -f submission_RibonanzaNet-Deg_30_68_re.pt.csv -m "RibonanzaNet-Deg_30_68_re.pt"
 kaggle competitions submit -c stanford-covid-vaccine -f submission_RibonanzaNet-Deg_31_68_re.pt.csv -m "RibonanzaNet-Deg_31_68_re.pt"
+
+## 2024-08-10
+这个是需要在交互环境下运行的。
+今天要把上次finetune的模型，评测一下。
+
+pjsub --interact -g gs58 -L rscgrp=interactive-a,node=1
+
+export MPLCONFIGDIR="/work/gs58/d58004/tmp/matplotlib"
+export WANDB_CONFIG_DIR="/work/gs58/d58004/tmp/wandb"
+export TRITON_CACHE_DIR="/work/gs58/d58004/tmp/triton"
+export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.001-epochs20-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-0-freezed-FinetuneDeg-epoch20.pt
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/highSN_lr0.001-epochs20-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-2-annealed-FinetuneDeg-epoch11.pt
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.001-epochs20-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-0-freezed-FinetuneDeg-epoch20.pt.csv -m "pseudo_lr0.001-epochs20-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-0-freezed-FinetuneDeg-epoch20.pt"
+## 2024-08-11 增加了epoch 100的模型
+
+pseudo_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-1-unfreezed-FinetuneDeg-epoch024.pt
+
+highSN_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-2-annealed-FinetuneDeg-epoch013.pt
+
+```bash
+export MPLCONFIGDIR="/work/gs58/d58004/tmp/matplotlib"
+export WANDB_CONFIG_DIR="/work/gs58/d58004/tmp/wandb"
+export TRITON_CACHE_DIR="/work/gs58/d58004/tmp/triton"
+export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
+export TRANSFORMERS_CACHE="/work/gs58/d58004/tmp/transformers"
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-1-unfreezed-FinetuneDeg-epoch024.pt
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/highSN_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-2-annealed-FinetuneDeg-epoch013.pt
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-1-unfreezed-FinetuneDeg-epoch024.pt.csv -m "pseudo_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-1-unfreezed-FinetuneDeg-epoch024.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-2-annealed-FinetuneDeg-epoch013.pt.csv -m "highSN_lr0.0001-epochs100-wd0.001-max_seq_length130-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-2-annealed-FinetuneDeg-epoch013.pt"
+
+```
