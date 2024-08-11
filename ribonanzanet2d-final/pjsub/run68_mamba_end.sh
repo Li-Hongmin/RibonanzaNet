@@ -11,6 +11,8 @@
 #------- Program execution -------#
 export MPLCONFIGDIR="/work/gs58/d58004/tmp/matplotlib"
 export WANDB_CONFIG_DIR="/work/gs58/d58004/tmp/wandb"
+export TRANSFORMERS_CACHE="/work/gs58/d58004/tmp/transformers"
+
 export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
 nvidia-smi
 cd /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final

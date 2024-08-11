@@ -65,7 +65,7 @@ class RNA_Dataset(Dataset):
             labels = labels[:self.length]
         else:
             labels = torch.cat([labels, torch.zeros(self.length - len(labels), 5)])
-        if sequence_len > self.length:
+        if sequence_len < self.length:
             sequence_len = torch.tensor(self.length)
         return {'sequence': sequence, 'labels': labels, 'length': sequence_len}
 
