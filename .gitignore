@@ -138,3 +138,4 @@ Ranger-Deep-Learning-Optimizer/
 .d000*
 *.p
 *.csv
+*debug.ipynb

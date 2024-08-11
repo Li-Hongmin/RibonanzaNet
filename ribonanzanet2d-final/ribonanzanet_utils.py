@@ -44,9 +44,10 @@ class RNA_test_Dataset(Dataset):
         return {'sequence': sequence}
 
 class RNA_Dataset(Dataset):
-    def __init__(self, data, length=68):
+    def __init__(self, data, length=68, max_len=130):
         self.data = data
         self.length = length
+        self.max_len = max_len
         self.tokens = {nt: i for i, nt in enumerate('ACGU')}
         self.label_names = ['reactivity', 'deg_Mg_pH10', 'deg_pH10', 'deg_Mg_50C', 'deg_50C']
                
@@ -57,10 +58,27 @@ class RNA_Dataset(Dataset):
         sequence = [self.tokens[nt] for nt in self.data.loc[idx, 'sequence']]
         sequence_len = len(sequence)
         sequence = torch.tensor(np.array(sequence))
-        if len(sequence) < self.length:
-            sequence = torch.cat([sequence, torch.ones(self.length - len(sequence)).long() * 4])
+        if len(sequence) < self.max_len:
+            sequence = torch.cat([sequence, torch.ones(self.max_len - len(sequence)).long() * 4])
         
-        labels = torch.tensor(np.stack([self.data.loc[idx, l] for l in self.label_names], -1))
+        # Function to pad tensors to the same size
+        def pad_tensor(tensor, target_length):
+            padding_length = target_length - tensor.size(0)
+            if padding_length > 0:
+                return torch.cat([tensor, torch.zeros(padding_length)], dim=0)
+            else:
+                return tensor[:target_length]
+
+        # Extract tensors from the DataFrame
+        tensors = [torch.tensor(self.data.loc[idx, l]) for l in self.label_names]
+
+        # Pad tensors to the target length
+        padded_tensors = [pad_tensor(tensor, self.length) for tensor in tensors]
+
+        # Stack the padded tensors
+        labels = torch.stack(padded_tensors, dim=-1)
+        print(labels.shape)
+        print(sequence.shape)
         if len(labels) > self.length:
             labels = labels[:self.length]
         else:
