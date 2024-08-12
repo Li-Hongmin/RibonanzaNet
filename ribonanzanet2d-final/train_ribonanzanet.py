@@ -123,11 +123,12 @@ def main(args):
     file_name = f"use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}"
 
     # make submission initial model
-    make_submission(model, args.submission_save_dir, file_name+"initial")
+    make_submission(model, args.submission_save_dir, f"{file_name}initial")
 
     save_path = f"{args.save_dir}/{file_name}-0-freezed-pseudo_"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    model = model.to(device)
     # make submission 0-freezed-pseudo model
     make_submission(
         model, args.submission_save_dir, f"{file_name}0-freezed-pseudo"
@@ -141,11 +142,13 @@ def main(args):
 
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    model = model.to(device)
+
     # make submission 1-unfreezed-pseudo model
     make_submission(
         model, args.submission_save_dir, f"{file_name}1-unfreezed-pseudo"
     )
-        
+
 
     # Annealed training with high SN data
     optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
@@ -154,6 +157,8 @@ def main(args):
     save_path = f"{args.save_dir}/{file_name}-2-annealed-highSN_"
     train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    model = model.to(device)
+
     # make submission 2-annealed-highSN model
     make_submission(
         model, args.submission_save_dir, f"{file_name}2-annealed-highSN"

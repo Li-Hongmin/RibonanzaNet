@@ -140,7 +140,8 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
 def make_submission(model, save_path, file_name):
     test_data=pd.read_json("/work/gs58/d58004/datasets/openVaccine/test.json",lines=True)
     test_dataset=RNA_test_Dataset(test_data)
-    device = model.device
+    # check device of model
+    device = next(model.parameters()).device
     test_preds=[]
     model.eval()
     for i in range(len(test_dataset)):
