@@ -137,6 +137,32 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
     highSN = train_step3[train_step3['signal_to_noise'] > sn_threshold].reset_index(drop=True)
     return train_step3, highSN
 
+def make_submission(model, save_path, file_name):
+    test_data=pd.read_json("/work/gs58/d58004/datasets/openVaccine/test.json",lines=True)
+    test_dataset=RNA_test_Dataset(test_data)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available():
+        device= torch.device("mps")
+    test_preds=[]
+    model.eval()
+    for i in range(len(test_dataset)):
+        example=test_dataset[i]
+        sequence=example['sequence'].to(device).unsqueeze(0)
+        with torch.no_grad():
+            test_preds.append(model(sequence).cpu().numpy())
+    preds=[]
+    ids=[]
+    for i in range(len(test_data)):
+        preds.append(test_preds[i][0,:])
+        id=test_data.loc[i,'id']
+        ids.extend([f"{id}_{pos}" for pos in range(len(test_preds[i][0,:]))])
+    preds=np.concatenate(preds)
+    sub=pd.DataFrame()
+    sub['id_seqpos']=ids
+    for i,l in enumerate(['reactivity', 'deg_Mg_pH10', 'deg_pH10', 'deg_Mg_50C', 'deg_50C']):
+        sub[l]=preds[:,i]
+    sub.to_csv(f'{save_path}/{file_name}.csv',index=False)
+    
 class hybrid_mamba_transformer(nn.Module):
     def __init__(self, config, k = 1):
         super(hybrid_mamba_transformer, self).__init__()

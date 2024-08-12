@@ -85,7 +85,7 @@ def main(args):
         device = torch.device("mps")
     model = finetuned_RibonanzaNet(config, use_hybrid = args.use_hybrid,
                                    use_mamba_end = args.use_mamba_end).to(device)
-    
+
     # Load previous model state
     print(f"Loading model from {args.model_path}")
     previous_state_dict = torch.load(args.model_path, map_location=device)
@@ -112,7 +112,7 @@ def main(args):
     train_loader3 = DataLoader(RNA_Dataset(train_step3, args.max_seq_length), batch_size=args.batch_size, shuffle=True)
     highSN_loader = DataLoader(RNA_Dataset(highSN, 68), batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(RNA_Dataset(val_split, 68), batch_size=args.batch_size, shuffle=False)
-    
+
     # Initial training with pseudo labels by freezing existing layers and unfreezing last layers
     optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr*10)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
@@ -120,25 +120,44 @@ def main(args):
     # Save path with parameters
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    save_path = f"{args.save_dir}/use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-0-freezed-pseudo_"
+    file_name = f"use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}"
+
+    # make submission initial model
+    make_submission(model, args.submission_save_dir, file_name+"initial")
+
+    save_path = f"{args.save_dir}/{file_name}-0-freezed-pseudo_"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
-    
+    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    # make submission 0-freezed-pseudo model
+    make_submission(
+        model, args.submission_save_dir, f"{file_name}0-freezed-pseudo"
+    )
+
     # Unfreeze all layers
     print("Unfreezing all layers")
     unfreeze_all_layers(model)
     # Retrain the model without freezing any layers
-    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
-    save_path = f"{args.save_dir}/use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-1-unfreezed-pseudo_"
-    
+    save_path = f"{args.save_dir}/{file_name}-1-unfreezed-pseudo_"
+
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
+    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    # make submission 1-unfreezed-pseudo model
+    make_submission(
+        model, args.submission_save_dir, f"{file_name}1-unfreezed-pseudo"
+    )
+        
 
     # Annealed training with high SN data
-    print("Annealed training with high SN data")
-    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
     optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
+    print("Annealed training with high SN data")
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
-    save_path = f"{args.save_dir}/use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-2-annealed-highSN_"
+    save_path = f"{args.save_dir}/{file_name}-2-annealed-highSN_"
     train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
+    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    # make submission 2-annealed-highSN model
+    make_submission(
+        model, args.submission_save_dir, f"{file_name}2-annealed-highSN"
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train RibonanzaNet with pseudo labels")
@@ -159,6 +178,8 @@ if __name__ == "__main__":
     parser.add_argument("--use_mamba_end", type=bool, default=False, help="Use Mamba2 at end of the model")
     # use_hybrid
     parser.add_argument("--use_hybrid", type=bool, default=False, help="Use hybrid mamba transformer")
+    # submission_save_dir
+    parser.add_argument("--submission_save_dir", type=str, default="submissions", help="Path to save the submission CSV file")
     
     args = parser.parse_args()
     main(args)
