@@ -269,12 +269,9 @@ class ConvTransformerEncoderLayer(nn.Module):
         return custom_forward
 
     def forward(self, src , pairwise_features, src_mask=None, return_aw=False, use_gradient_checkpoint=False):
-        if src_mask is None:
-            src_mask = torch.ones_like(src)
-            print("src mask is none")
-            print(src.shape)
-            print(src_mask.shape)
-        src = src * src_mask.float().unsqueeze(-1)
+        if src_mask is not None:
+            
+            src = src * src_mask.float().unsqueeze(-1)
         
         # print(self.norm3(self.conv(src.permute(0,2,1)).permute(0,2,1)).shape)
         # exit()
