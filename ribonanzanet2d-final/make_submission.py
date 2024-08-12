@@ -58,17 +58,40 @@ def load_config_from_yaml(file_path):
     return Config(**config)
 
 class finetuned_RibonanzaNet(RibonanzaNet):
-    def __init__(self, config):
+    def __init__(self, config, use_mamba_start=False, use_mamba_end=False):
         super(finetuned_RibonanzaNet, self).__init__(config)
+        self.use_mamba_start = use_mamba_start
+        self.use_mamba_end = use_mamba_end
+        # if use_mamba_start:
+        #     self.mamba_start = Mamba2(
+        #         # This module uses roughly 3 * expand * d_model^2 parameters
+        #         d_model=256, # Model dimension d_model
+        #         d_state=128,  # SSM state expansion factor, typically 64 or 128
+        #         d_conv=4,    # Local convolution width
+        #         expand=2,    # Block expansion factor
+        #     )
+        #     print("mamba is used at the start")
+        if use_mamba_end:
+            self.mamba_end= Mamba2(
+                # This module uses roughly 3 * expand * d_model^2 parameters
+                d_model=256, # Model dimension d_model
+                d_state=128,  # SSM state expansion factor, typically 64 or 128
+                d_conv=4,    # Local convolution width
+                expand=2,    # Block expansion factor
+            )
+            print("mamba is used at the end")
+        self.decoder = nn.Linear(256, 5)
 
-        self.decoder = nn.Linear(config.ninp,5)
+
+    def forward(self, src):
+        # if self.use_mamba_start:
+        #     sequence_features = self.mamba_start(sequence_features)
         
-    def forward(self,src):
+        sequence_features, pairwise_features = self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
+        if self.use_mamba_end:
+            sequence_features = self.mamba_end(sequence_features)
+        output = self.decoder(sequence_features)
         
-        sequence_features, pairwise_features=self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
-
-        output=self.decoder(sequence_features) #predict
-
         return output#.squeeze(-1)
 
 # %%
@@ -76,7 +99,6 @@ config=load_config_from_yaml("configs/pairwise.yaml")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.backends.mps.is_available():
     device= torch.device("mps")
-model=finetuned_RibonanzaNet(config).to(device)
 #1. Initial Model Training-only confident labels:
 import argparse
 
@@ -84,6 +106,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--para', type=str, default="RibonanzaNet-Deg_31.pt")
 
 args = parser.parse_args()
+if "use_mamba_endTrue" in args.para:
+    use_mamba_endTrue = True
+else:
+    use_mamba_endTrue = False
+model=finetuned_RibonanzaNet(config, use_mamba_end = use_mamba_endTrue).to(device)
 model.load_state_dict(torch.load(args.para,map_location=device))
 
 # multi-gpu 
