@@ -140,9 +140,7 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
 def make_submission(model, save_path, file_name):
     test_data=pd.read_json("/work/gs58/d58004/datasets/openVaccine/test.json",lines=True)
     test_dataset=RNA_test_Dataset(test_data)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if torch.backends.mps.is_available():
-        device= torch.device("mps")
+    device = model.device
     test_preds=[]
     model.eval()
     for i in range(len(test_dataset)):
