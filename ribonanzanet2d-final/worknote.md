@@ -157,3 +157,6 @@ Traceback (most recent call last):
     raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
 RuntimeError: Error(s) in loading state_dict for finetuned_RibonanzaNet:
         Missing key(s) in state_dict: "mamba_end.dt_bias", "mamba_end.A_log", "mamba_end.D", "mamba_end.in_proj.weight", "mamba_end.conv1d.weight", "mamba_end.conv1d.bias", "mamba_end.norm.weight", "mamba_end.out_proj.weight". 
+
+结果发现这个没有发挥作用，因为我的参数没有传递过去。
+use_mamba_end 还是 False的
