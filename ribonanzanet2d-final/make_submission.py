@@ -95,7 +95,6 @@ class finetuned_RibonanzaNet(RibonanzaNet):
         return output#.squeeze(-1)
 
 # %%
-config=load_config_from_yaml("configs/pairwise.yaml")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.backends.mps.is_available():
     device= torch.device("mps")
@@ -104,8 +103,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--para', type=str, default="RibonanzaNet-Deg_31.pt")
+parser.add_argument("--config_path", type=str, default="configs/pairwise.yaml", help="Path to the configuration YAML file")
+
 
 args = parser.parse_args()
+config=load_config_from_yaml("configs/pairwise.yaml")
 if "use_mamba_endTrue" in args.para:
     use_mamba_endTrue = True
 else:
