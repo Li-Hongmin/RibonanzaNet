@@ -95,11 +95,6 @@ python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzan
 echo "model 2"
 python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/highSN_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt
 
-echo "model 3"
-python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
-
-echo "model 4"
-python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
 
 echo "model 5"
 python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt
@@ -114,3 +109,51 @@ echo "model 8"
 python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt
 
 ```
+
+-rw-r----- 1 d58004 gs58 32225584 Aug 12 15:54 submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt.csv
+-rw-r----- 1 d58004 gs58 32356171 Aug 12 15:57 submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt.csv
+-rw-r----- 1 d58004 gs58 32230178 Aug 12 16:11 submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt.csv
+-rw-r----- 1 d58004 gs58 32241501 Aug 12 16:14 submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt.csv
+-rw-r----- 1 d58004 gs58 32371729 Aug 12 16:20 submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt.csv
+-rw-r----- 1 d58004 gs58 32333284 Aug 12 16:24 submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt.csv
+
+把上面的提交到kaggle
+
+```bash
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt.csv -m "submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt.csv -m "submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-2-annealed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt.csv -m "submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt.csv -m "submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt.csv -m "submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-0-freezed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt.csv -m "submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length91-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaTrue-use_mamba_endFalse-1-unfreezed-FinetuneDeg-epoch.pt"
+
+```
+
+当前存在的问题是
+
+```bash
+export MPLCONFIGDIR="/work/gs58/d58004/tmp/matplotlib"
+export WANDB_CONFIG_DIR="/work/gs58/d58004/tmp/wandb"
+export TRITON_CACHE_DIR="/work/gs58/d58004/tmp/triton"
+export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
+echo "model 3"
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
+
+echo "model 4"
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
+```
+
+mamba is used at the end
+Traceback (most recent call last):
+  File "/work/02/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/make_submission.py", line 116, in <module>
+    model.load_state_dict(torch.load(args.para,map_location=device))
+  File "/work/02/gs58/d58004/mambaforge/envs/torch/lib/python3.9/site-packages/torch/nn/modules/module.py", line 2152, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for finetuned_RibonanzaNet:
+        Missing key(s) in state_dict: "mamba_end.dt_bias", "mamba_end.A_log", "mamba_end.D", "mamba_end.in_proj.weight", "mamba_end.conv1d.weight", "mamba_end.conv1d.bias", "mamba_end.norm.weight", "mamba_end.out_proj.weight". 

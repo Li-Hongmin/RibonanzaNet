@@ -83,7 +83,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available():
         device = torch.device("mps")
-    model = finetuned_RibonanzaNet(config, args.use_mamba_end).to(device)
+    model = finetuned_RibonanzaNet(config, use_mamba_end = args.use_mamba_end).to(device)
     
     # Load previous model state
     print(f"Loading model from {args.model_path}")
