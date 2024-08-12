@@ -76,9 +76,7 @@ class RNA_Dataset(Dataset):
         padded_tensors = [pad_tensor(tensor, self.length) for tensor in tensors]
 
         # Stack the padded tensors
-        labels = torch.stack(padded_tensors, dim=-1)
-        print(labels.shape)
-        print(sequence.shape)
+
         if len(labels) > self.length:
             labels = labels[:self.length]
         else:
