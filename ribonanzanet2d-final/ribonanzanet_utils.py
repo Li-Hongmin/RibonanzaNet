@@ -196,6 +196,7 @@ class finetuned_RibonanzaNet(RibonanzaNet):
             for i in range(1, hybrid_layers + 1):
                 k = 1 if i == hybrid_layers else 5
                 self.layers.append(hybrid_mamba_transformer(config, k=k))
+            self.layers = nn.ModuleList(self.layers)
 
         if use_mamba_end:
             self.mamba_end= Mamba2(
