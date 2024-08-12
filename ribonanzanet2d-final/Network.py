@@ -195,7 +195,7 @@ class MultiHeadAttention(nn.Module):
 class ConvTransformerEncoderLayer(nn.Module):
 
     def __init__(self, d_model, nhead, 
-                 dim_feedforward, pairwise_dimension, use_mamba, use_triangular_attention, dropout=0.1, k = 3,
+                 dim_feedforward, pairwise_dimension, use_triangular_attention, use_mamba=False, dropout=0.1, k = 3,
                  ):
         super(ConvTransformerEncoderLayer, self).__init__()
         #self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
