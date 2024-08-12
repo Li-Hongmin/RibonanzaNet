@@ -183,7 +183,7 @@ class hybrid_mamba_transformer(nn.Module):
 
     def forward(self, sequence_features, pairwise_features, src_mask = None, return_aw=False):
         sequence_features = self.mamba(sequence_features)
-        sequence_features, pairwise_features = self.transformer(sequence_features,src_mask,return_aw=return_aw,use_gradient_checkpoint=self.use_gradient_checkpoint)
+        sequence_features, pairwise_features = self.transformer(sequence_features,pairwise_features,src_mask,return_aw=return_aw,use_gradient_checkpoint=self.use_gradient_checkpoint)
         return sequence_features, pairwise_features
 # Model class
 class finetuned_RibonanzaNet(RibonanzaNet):
