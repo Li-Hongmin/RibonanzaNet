@@ -73,9 +73,10 @@ class RNA_Dataset(Dataset):
         tensors = [torch.tensor(self.data.loc[idx, l]) for l in self.label_names]
 
         # Pad tensors to the target length
-        labels = [pad_tensor(tensor, self.length) for tensor in tensors]
+        padded_tensors = [pad_tensor(tensor, self.length) for tensor in tensors]
 
         # Stack the padded tensors
+        labels = torch.stack(padded_tensors, dim=-1)
 
         if len(labels) > self.length:
             labels = labels[:self.length]
@@ -84,7 +85,6 @@ class RNA_Dataset(Dataset):
         if sequence_len > self.length:
             sequence_len = torch.tensor(self.length)
         return {'sequence': sequence, 'labels': labels, 'length': sequence_len}
-
 # Loss function
 def MCRMAE(y_pred, y_true):
     colwise_mae = torch.mean(torch.abs(y_true - y_pred), dim=0)
