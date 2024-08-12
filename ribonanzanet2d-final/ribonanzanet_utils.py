@@ -166,6 +166,7 @@ class hybrid_mamba_transformer(nn.Module):
     def __init__(self, config, k = 1):
         super(hybrid_mamba_transformer, self).__init__()
         print("hybrid_mamba_transformer is used")
+        self.use_gradient_checkpoint=config.use_grad_checkpoint
         self.mamba = Mamba2(
             # This module uses roughly 3 * expand * d_model^2 parameters
             d_model=256, # Model dimension d_model
@@ -180,9 +181,9 @@ class hybrid_mamba_transformer(nn.Module):
                                                         dropout = config.dropout, k=k)
         self.decoder = nn.Linear(256, 5)
 
-    def forward(self, sequence_features, pairwise_features):
+    def forward(self, sequence_features, pairwise_features, src_mask = None, return_aw=False):
         sequence_features = self.mamba(sequence_features)
-        sequence_features, pairwise_features = self.transformer(sequence_features, pairwise_features)
+        sequence_features, pairwise_features = self.transformer(sequence_features,src_mask,return_aw=return_aw,use_gradient_checkpoint=self.use_gradient_checkpoint)
         return sequence_features, pairwise_features
 # Model class
 class finetuned_RibonanzaNet(RibonanzaNet):
