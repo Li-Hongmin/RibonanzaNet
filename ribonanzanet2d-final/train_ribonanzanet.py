@@ -83,7 +83,8 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available():
         device = torch.device("mps")
-    model = finetuned_RibonanzaNet(config, use_mamba_end = args.use_mamba_end).to(device)
+    model = finetuned_RibonanzaNet(config, use_hybrid = args.use_hybrid,
+                                   use_mamba_end = args.use_mamba_end).to(device)
     
     # Load previous model state
     print(f"Loading model from {args.model_path}")
@@ -119,7 +120,7 @@ def main(args):
     # Save path with parameters
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-0-freezed-"
+    save_path = f"{args.save_dir}/use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-0-freezed-pseudo_"
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
     
     # Unfreeze all layers
@@ -127,7 +128,7 @@ def main(args):
     unfreeze_all_layers(model)
     # Retrain the model without freezing any layers
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
-    save_path = f"{args.save_dir}/pseudo_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-1-unfreezed-"
+    save_path = f"{args.save_dir}/use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-1-unfreezed-pseudo_"
     
     last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
 
@@ -136,7 +137,7 @@ def main(args):
     model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
     optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
-    save_path = f"{args.save_dir}/highSN_lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-2-annealed-"
+    save_path = f"{args.save_dir}/use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}-2-annealed-highSN_"
     train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
 
 if __name__ == "__main__":
@@ -156,6 +157,8 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
     # parser.add_argument("--use_mamba_start", type=bool, default=False, help="Use Mamba2 at beginning of the model")
     parser.add_argument("--use_mamba_end", type=bool, default=False, help="Use Mamba2 at end of the model")
+    # use_hybrid
+    parser.add_argument("--use_hybrid", type=bool, default=False, help="Use hybrid mamba transformer")
     
     args = parser.parse_args()
     main(args)

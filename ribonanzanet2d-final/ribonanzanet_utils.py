@@ -5,7 +5,7 @@ import random
 import yaml
 from torch.utils.data import Dataset
 from sklearn.model_selection import StratifiedKFold
-from Network import RibonanzaNet
+from Network import RibonanzaNet, ConvTransformerEncoderLayer
 import torch.nn as nn
 from mamba_ssm import Mamba2
 
@@ -137,21 +137,40 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
     highSN = train_step3[train_step3['signal_to_noise'] > sn_threshold].reset_index(drop=True)
     return train_step3, highSN
 
+class hybrid_mamba_transformer(nn.Module):
+    def __init__(self, config, k = 1):
+        super(hybrid_mamba_transformer, self).__init__()
+        self.mamba = Mamba2(
+            # This module uses roughly 3 * expand * d_model^2 parameters
+            d_model=256, # Model dimension d_model
+            d_state=128,  # SSM state expansion factor, typically 64 or 128
+            d_conv=4,    # Local convolution width
+            expand=2,    # Block expansion factor
+        )
+        self.transformer = ConvTransformerEncoderLayer(d_model = config.ninp, nhead = config.nhead,
+                                                        dim_feedforward = config.ninp*4, 
+                                                        pairwise_dimension= config.pairwise_dimension,
+                                                        use_triangular_attention=config.use_triangular_attention,
+                                                        dropout = config.dropout, k=k)
+        self.decoder = nn.Linear(256, 5)
+
+    def forward(self, sequence_features, pairwise_features):
+        sequence_features = self.mamba(sequence_features)
+        sequence_features, pairwise_features = self.transformer(sequence_features, pairwise_features)
+        return sequence_features, pairwise_features
 # Model class
 class finetuned_RibonanzaNet(RibonanzaNet):
-    def __init__(self, config, use_mamba_start=False, use_mamba_end=False):
+    def __init__(self, config, use_hybrid=False, use_mamba_end=False, nlayers=1):
         super(finetuned_RibonanzaNet, self).__init__(config)
-        self.use_mamba_start = use_mamba_start
         self.use_mamba_end = use_mamba_end
-        # if use_mamba_start:
-        #     self.mamba_start = Mamba2(
-        #         # This module uses roughly 3 * expand * d_model^2 parameters
-        #         d_model=256, # Model dimension d_model
-        #         d_state=128,  # SSM state expansion factor, typically 64 or 128
-        #         d_conv=4,    # Local convolution width
-        #         expand=2,    # Block expansion factor
-        #     )
-        #     print("mamba is used at the start")
+        self.use_hybrid = use_hybrid
+        
+        if use_hybrid:
+            self.layers = []
+            for i in range(1, nlayers + 1):
+                k = 1 if i == nlayers else 5
+                self.layers.append(hybrid_mamba_transformer(config, k=k))
+
         if use_mamba_end:
             self.mamba_end= Mamba2(
                 # This module uses roughly 3 * expand * d_model^2 parameters
@@ -165,10 +184,12 @@ class finetuned_RibonanzaNet(RibonanzaNet):
 
 
     def forward(self, src):
-        # if self.use_mamba_start:
-        #     sequence_features = self.mamba_start(sequence_features)
-        
+
         sequence_features, pairwise_features = self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
+        if self.use_hybrid:
+            for layer in self.layers:
+                sequence_features, pairwise_features = layer(sequence_features, pairwise_features)
+
         if self.use_mamba_end:
             sequence_features = self.mamba_end(sequence_features)
         output = self.decoder(sequence_features)
