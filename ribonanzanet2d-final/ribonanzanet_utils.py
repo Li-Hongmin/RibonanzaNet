@@ -182,8 +182,14 @@ class hybrid_mamba_transformer(nn.Module):
         self.decoder = nn.Linear(256, 5)
 
     def forward(self, sequence_features, pairwise_features, src_mask = None, return_aw=False):
+        print("shape of sequence_features", sequence_features.shape)
+        print("shape of pairwise_features", pairwise_features.shape)
         sequence_features = self.mamba(sequence_features)
+        print("shape of sequence_features after mamba", sequence_features.shape)
+        
         sequence_features, pairwise_features = self.transformer(sequence_features,pairwise_features,src_mask,return_aw=return_aw,use_gradient_checkpoint=self.use_gradient_checkpoint)
+        print("shape of sequence_features after transformer", sequence_features.shape)
+        print("shape of pairwise_features after transformer", pairwise_features.shape)
         return sequence_features, pairwise_features
 # Model class
 class finetuned_RibonanzaNet(RibonanzaNet):
