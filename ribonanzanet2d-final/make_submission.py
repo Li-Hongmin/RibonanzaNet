@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import random
-
+from mamba_ssm import Mamba2
 # %% [markdown]
 # # Define Dataset
 
@@ -107,7 +107,7 @@ parser.add_argument("--config_path", type=str, default="configs/pairwise.yaml", 
 
 
 args = parser.parse_args()
-config=load_config_from_yaml("configs/pairwise.yaml")
+config=load_config_from_yaml(args.config_path)
 if "use_mamba_endTrue" in args.para:
     use_mamba_endTrue = True
 else:
