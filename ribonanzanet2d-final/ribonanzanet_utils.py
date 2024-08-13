@@ -222,7 +222,7 @@ class finetuned_RibonanzaNet(RibonanzaNet):
         sequence_features, pairwise_features = self.get_embeddings(src, torch.ones_like(src).long().to(src.device))
         if self.use_hybrid:
             for layer in self.layers:
-                sequence_features, pairwise_features = layer(sequence_features, pairwise_features)
+                sequence_features, pairwise_features = layer(sequence_features, pairwise_features, torch.ones_like(src).long().to(src.device))
 
         if self.use_mamba_end:
             sequence_features = self.mamba_end(sequence_features)
