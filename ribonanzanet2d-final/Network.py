@@ -269,9 +269,6 @@ class ConvTransformerEncoderLayer(nn.Module):
         return custom_forward
 
     def forward(self, src , pairwise_features, src_mask=None, return_aw=False, use_gradient_checkpoint=False):
-        print("shape of src", src.shape)
-        print("shape of pairwise_features", pairwise_features.shape)
-        print("shape of src_mask", src_mask.shape)
         src = src*src_mask.float().unsqueeze(-1)
 
         
