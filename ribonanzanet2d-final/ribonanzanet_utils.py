@@ -8,6 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 from Network import RibonanzaNet, ConvTransformerEncoderLayer
 import torch.nn as nn
 from mamba_ssm import Mamba2
+from tqdm import tqdm
 
 # Set seed for reproducibility
 def set_seed(seed=0):
@@ -138,13 +139,14 @@ def prepare_training_data(train_split, data_noisy, test107, test130, sn_threshol
     return train_step3, highSN
 
 def make_submission(model, save_path, file_name):
+    print("Making submission")
     test_data=pd.read_json("/work/gs58/d58004/datasets/openVaccine/test.json",lines=True)
     test_dataset=RNA_test_Dataset(test_data)
     # check device of model
     device = next(model.parameters()).device
     test_preds=[]
     model.eval()
-    for i in range(len(test_dataset)):
+    for i in tqdm(range(len(test_dataset))):
         example=test_dataset[i]
         sequence=example['sequence'].to(device).unsqueeze(0)
         with torch.no_grad():
