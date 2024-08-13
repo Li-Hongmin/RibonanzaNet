@@ -270,7 +270,6 @@ class ConvTransformerEncoderLayer(nn.Module):
 
     def forward(self, src , pairwise_features, src_mask=None, return_aw=False, use_gradient_checkpoint=False):
         if src_mask is not None:
-            
             src = src * src_mask.float().unsqueeze(-1)
         
         # print(self.norm3(self.conv(src.permute(0,2,1)).permute(0,2,1)).shape)
@@ -421,7 +420,8 @@ class TriangleMultiplicativeModule(nn.Module):
         self.to_out = nn.Linear(hidden_dim, dim)
 
     def forward(self, x, src_mask):
-        src_mask=src_mask.unsqueeze(-1).float()
+        if src_mask is not None:
+            src_mask=src_mask.unsqueeze(-1).float()
         mask = torch.matmul(src_mask,src_mask.permute(0,2,1))
         assert x.shape[1] == x.shape[2], 'feature map must be symmetrical'
         if exists(mask):
