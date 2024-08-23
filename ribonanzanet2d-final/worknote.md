@@ -160,3 +160,49 @@ RuntimeError: Error(s) in loading state_dict for finetuned_RibonanzaNet:
 
 结果发现这个没有发挥作用，因为我的参数没有传递过去。
 use_mamba_end 还是 False的
+
+## 2024-08-13
+
+今天完成了几个模型的训练，提交。
+
+-rw-r----- 1 d58004 gs58 47444750 Aug 13 19:14 highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-2-annealed-FinetuneDeg-epoch.pt
+-rw-r----- 1 d58004 gs58 47444162 Aug 13 08:40 pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-FinetuneDeg-epoch.pt
+-rw-r----- 1 d58004 gs58 47445338 Aug 13 16:37 pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-FinetuneDeg-epoch.pt
+
+-rw-r----- 1 d58004 gs58 53422702 Aug 13 11:58 use_hybridTrue-lr0.001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-pseudo_FinetuneDeg-epoch.pt
+-rw-r----- 1 d58004 gs58 53424024 Aug 13 19:53 use_hybridTrue-lr0.001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-pseudo_FinetuneDeg-epoch.pt
+
+```bash
+
+export MPLCONFIGDIR="/work/gs58/d58004/tmp/matplotlib"
+export WANDB_CONFIG_DIR="/work/gs58/d58004/tmp/wandb"
+export TRITON_CACHE_DIR="/work/gs58/d58004/tmp/triton"
+export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
+
+echo "model 9"
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-2-annealed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
+
+echo "model 10"
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
+
+echo "model 11"
+
+python make_submission.py --para /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final/saved_models_mamaba/pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-FinetuneDeg-epoch.pt --config_path configs/pairwise_no_mamba.yaml
+```
+
+提交到kaggle
+
+```bash
+kaggle competitions submit -c stanford-covid-vaccine -f submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-2-annealed-FinetuneDeg-epoch.pt.csv -m "submission_highSN_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-2-annealed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-FinetuneDeg-epoch.pt.csv -m "submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-0-freezed-FinetuneDeg-epoch.pt"
+
+kaggle competitions submit -c stanford-covid-vaccine -f submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-FinetuneDeg-epoch.pt.csv -m "submission_pseudo_lr0.0001-epochs100-wd0.001-max_seq_length68-sn_threshold5.0-noisy_threshold1.0-batch_size32-use_mambaFalse-use_mamba_endTrue-1-unfreezed-FinetuneDeg-epoch.pt"
+
+```
+
+## 2024-08-16
+我发现还是得按原来的节奏，也就是先得用2阶段的训练，然后再用3阶段的训练。
+也就是说，先用2阶段的比较好的数据+噪声数据的伪标签，然后再用3阶段的加上测试数据的伪标签。

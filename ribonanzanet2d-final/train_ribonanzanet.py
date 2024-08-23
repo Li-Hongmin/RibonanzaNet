@@ -88,7 +88,7 @@ def main(args):
 
     # Load previous model state
     print(f"Loading model from {args.model_path}")
-    previous_state_dict = torch.load(args.model_path, map_location=device)
+    previous_state_dict = torch.load(args.model_path, map_location=device, weights_only=True)
     model.load_state_dict(previous_state_dict, strict=False)
 
     # Freeze existing layers and unfreeze new layers
@@ -99,6 +99,7 @@ def main(args):
     print("Loading and processing data")
     data, data_noisy, test107, test130 = load_data(args.train_pseudo_path, args.test_pseudo_107_path, args.test_pseudo_130_path, args.noisy_threshold)
     train_split, val_split = split_data(data)
+    highSN = train_split[train_split['signal_to_noise'] > args.sn_threshold].reset_index(drop=True)
 
     # Update pseudo labels for noisy data
     data_noisy = update_pseudo_labels(data_noisy)
@@ -106,15 +107,18 @@ def main(args):
     test130 = update_pseudo_labels(test130)
     train_split = augment_real_with_pseudo(train_split)
 
-    train_step3, highSN = prepare_training_data(train_split, data_noisy, test107, test130, args.sn_threshold)
+    train_step2 = pd.concat([train_split, data_noisy], axis=0).reset_index(drop=True)
+    train_step3, _ = prepare_training_data(train_split, data_noisy, test107, test130, args.sn_threshold)
 
     # Create data loaders
+    train_loader = DataLoader(RNA_Dataset(train_split, args.max_seq_length), batch_size=args.batch_size, shuffle=True)
+    train_loader2 = DataLoader(RNA_Dataset(train_step2, args.max_seq_length), batch_size=args.batch_size, shuffle=True)
     train_loader3 = DataLoader(RNA_Dataset(train_step3, args.max_seq_length), batch_size=args.batch_size, shuffle=True)
     highSN_loader = DataLoader(RNA_Dataset(highSN, 68), batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(RNA_Dataset(val_split, 68), batch_size=args.batch_size, shuffle=False)
 
     # Initial training with pseudo labels by freezing existing layers and unfreezing last layers
-    optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr*10)
+    optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
     schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
 
     # Save path with parameters
@@ -123,45 +127,74 @@ def main(args):
     file_name = f"use_hybrid{args.use_hybrid}-lr{args.lr}-epochs{args.epochs}-wd{args.weight_decay}-max_seq_length{args.max_seq_length}-sn_threshold{args.sn_threshold}-noisy_threshold{args.noisy_threshold}-batch_size{args.batch_size}-use_mamba{config.use_mamba}-use_mamba_end{args.use_mamba_end}"
 
     # make submission initial model
-    make_submission(model, args.submission_save_dir, f"{file_name}initial")
+    # make_submission(model, args.submission_save_dir, f"{file_name}initial")
 
-    save_path = f"{args.save_dir}/{file_name}-0-freezed-pseudo_"
-    last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
-    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    # step 1
+    print("Step 1: Initial training with clear data")
+    save_path = f"{args.save_dir}/{file_name}-step1_freezed-clear"
+    last_model_path = train_model(model, highSN_loader, train_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
+    
+    model.load_state_dict(torch.load(last_model_path, map_location=device, weights_only=True), strict=False)
     model = model.to(device)
     # make submission 0-freezed-pseudo model
     make_submission(
-        model, args.submission_save_dir, f"{file_name}0-freezed-pseudo"
+        model, args.submission_save_dir, f"{file_name}-step1_freezed-clear"
     )
 
     # Unfreeze all layers
+    # step 2
+    print("Step 2: Unfreezing all layers + noisy data")
     print("Unfreezing all layers")
     unfreeze_all_layers(model)
     # Retrain the model without freezing any layers
-    save_path = f"{args.save_dir}/{file_name}-1-unfreezed-pseudo_"
+    save_path = f"{args.save_dir}/{file_name}-step2-unfreezed+noisy"
 
-    last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
-    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    last_model_path = train_model(model, train_loader2, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
+    model.load_state_dict(torch.load(last_model_path, map_location=device, weights_only=True), strict=False)
     model = model.to(device)
 
     # make submission 1-unfreezed-pseudo model
     make_submission(
-        model, args.submission_save_dir, f"{file_name}1-unfreezed-pseudo"
+        model, args.submission_save_dir, f"{file_name}-step2-unfreezed+noisy"
     )
 
-
+    print("Step 2.1: Annealed training with high SN data")
     # Annealed training with high SN data
-    optimizer = Ranger(filter(lambda p: p.requires_grad, model.parameters()), weight_decay=args.weight_decay, lr=args.lr)
+    
     print("Annealed training with high SN data")
-    schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(highSN_loader))
-    save_path = f"{args.save_dir}/{file_name}-2-annealed-highSN_"
-    train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
-    model.load_state_dict(torch.load(last_model_path, map_location=device), strict=False)
+    
+    save_path = f"{args.save_dir}/{file_name}-step2.1-annealed-highSN_"
+    last_model_path = train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
+    model.load_state_dict(torch.load(last_model_path, map_location=device, weights_only=True), strict=False)
     model = model.to(device)
 
     # make submission 2-annealed-highSN model
     make_submission(
-        model, args.submission_save_dir, f"{file_name}2-annealed-highSN"
+        model, args.submission_save_dir, f"{file_name}-step2.1-annealed-highSN_"
+    )
+
+    # step 3
+    print("Step 3: Final training with all data")
+    save_path = f"{args.save_dir}/{file_name}-step3-all_data"
+    last_model_path = train_model(model, train_loader3, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path)
+    model.load_state_dict(torch.load(last_model_path, map_location=device, weights_only=True), strict=False)
+    model = model.to(device)
+
+    # make submission 3-all_data model
+    make_submission(
+        model, args.submission_save_dir, f"{file_name}-step3-all_data"
+    )
+
+    # step 3.1
+    print("Step 3.1: Annealed training with HIGH SN data")
+    save_path = f"{args.save_dir}/{file_name}-step3.1-annealed-highSN"
+    last_model_path = train_model(model, highSN_loader, val_loader, epochs=args.epochs, optimizer=optimizer, criterion=MCRMAE, save_path=save_path, schedule=schedule)
+    model.load_state_dict(torch.load(last_model_path, map_location=device, weights_only=True), strict=False)
+    model = model.to(device)
+
+    # make submission 4-annealed-highSN model
+    make_submission(
+        model, args.submission_save_dir, f"{file_name}-step3.1-annealed-highSN"
     )
 
 if __name__ == "__main__":
