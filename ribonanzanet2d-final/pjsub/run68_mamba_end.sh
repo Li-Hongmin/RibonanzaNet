@@ -16,4 +16,4 @@ export PATH="/work/02/gs58/d58004/mambaforge/envs/torch/bin/:$PATH"
 nvidia-smi
 cd /work/gs58/d58004/ideas/RibonanzaNet/ribonanzanet2d-final
 echo "Start training"
-python train_ribonanzanet.py --save_dir saved_models_mamaba --epochs 100 --batch_size 32 --lr 0.0001 --max_seq_length 68 --use_mamba_end True --config_path configs/pairwise_no_mamba.yaml
+python train_ribonanzanet.py --save_dir saved_3stage_models --epochs 100 --batch_size 32 --lr 0.0001 --max_seq_length 68 --use_mamba_end True --config_path configs/pairwise_no_mamba.yaml
