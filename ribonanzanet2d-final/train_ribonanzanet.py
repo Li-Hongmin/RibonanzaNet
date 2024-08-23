@@ -217,7 +217,7 @@ if __name__ == "__main__":
     # use_hybrid
     parser.add_argument("--use_hybrid", type=bool, default=False, help="Use hybrid mamba transformer")
     # submission_save_dir
-    parser.add_argument("--submission_save_dir", type=str, default="submissions", help="Path to save the submission CSV file")
+    parser.add_argument("--submission_save_dir", type=str, default="submissions_mamba", help="Path to save the submission CSV file")
     
     args = parser.parse_args()
     main(args)
